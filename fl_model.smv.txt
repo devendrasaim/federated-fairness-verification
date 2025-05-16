@@ -1,0 +1,30 @@
+-- fl_model.smv  
+MODULE main
+VAR
+  state : {idle, broadcast, collect, aggregate, evaluate};
+  round : 0..5;              -- we’ll check up to 5 rounds
+  agg_count : 0..3;          -- pretend we have 3 clients
+ASSIGN
+  init(state) := idle;
+  init(round) := 0;
+  init(agg_count) := 0;
+
+  next(state) := case
+    state = idle      : broadcast;
+    state = broadcast : collect;
+    state = collect & agg_count = 3 : aggregate;
+    state = aggregate : evaluate;
+    state = evaluate  & round < 5 : idle;
+    TRUE                      : state;
+  esac;
+
+  next(round) := case
+    state = evaluate : round + 1;
+    TRUE              : round;
+  esac;
+
+  -- each time we’re in “collect,” pretend all 3 clients send updates:
+  next(agg_count) := case
+    state = collect : 3;
+    TRUE             : agg_count;
+  esac;
